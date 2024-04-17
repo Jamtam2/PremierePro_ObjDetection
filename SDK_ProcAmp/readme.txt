@@ -1,8 +1,9 @@
-DirectX:-
-The DirectX implementation users HLSL shaders which shall be compiled using DirectX Shader Compiler (DXC).
-The latest release of DXC can be found at https://github.com/microsoft/DirectXShaderCompiler/releases 
-Set DXC_BASE_PATH to the extracted zip folder for the shaders to be compiled for the example project.
-The command being used to compile the hlsl shader is as follows:
-`dxc.exe SDK_ProcAmp.hlsl -E main -Fo DirectX_Assets\SDK_ProcAmp.cso -Frs DirectX_Assets\SDK_ProcAmp.rs -T cs_6_5 -enable-16bit-types`
+# Current Progress
 
-Copy the DirectX_Assets folder from $(PREMSDKBUILDPATH) to [Program Files]\Adobe\Common\Plug-ins\7.0\MediaCore\ for the shaders to be picked up at runtime.
+The following steps have been completed:
+
+- Altered `SDK_ProcAmpGPU` code to return the RGB values of the frame data.
+
+## Purpose
+
+The RGB data obtained from this process will not be used directly for training the model. Instead, it serves the purpose of understanding the format of the data. This understanding ensures a smooth transition when training and predicting with the object detection model.
