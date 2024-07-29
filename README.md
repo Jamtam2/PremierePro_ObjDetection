@@ -1,6 +1,6 @@
 # Automatic Image and Video Masking Plugin
 
-This project aims to create a plugin utilizing object detection for automatically masking images or videos. It is particularly useful for asset generation, saving significant time in the process.
+This project aims to create a plugin utilizing image segmentation for automatically masking images or videos. It is particularly useful for asset generation, saving significant time in the process.
 
 While similar products exist for Adobe Premiere Pro, they are often locked behind a $100+ paywall. This plugin will be provided free of charge to all users.
 
