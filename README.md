@@ -24,8 +24,9 @@ By eliminating these steps, this project aims to streamline the masking process:
 ## Plan
 
 The project will progress through the following stages:
-- Exporting RGB value data from Premiere Pro to understand the data format
-- Training an Object Detection Model based on the format of the data
-- Integrating the Plugin with Premiere Pro
+- [x] Exporting RGB value data from Premiere Pro to understand the data format ✅ COMPLETED 7/29/2024
+- [ ] Training an Object Detection Model based on the format of the data
+- [ ] Integrating the Plugin with Premiere Pro
+
 
 Initially, the focus will be on automatic image masking, with plans to extend functionality to video masking in the future.
