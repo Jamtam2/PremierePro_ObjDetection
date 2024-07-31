@@ -26,9 +26,9 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <sstream>  
 
 
-//std::vector<vector<Pixel_For_ML>> vector
 
 // Define a structure to hold pixel data
 struct Pixel_For_ML {
@@ -38,10 +38,11 @@ struct Pixel_For_ML {
 	Pixel_For_ML(float b, float g, float r, float a, float t)
 		: B(b), G(g), R(r), A(a), time(t) {}
 };
+
 //struct Frame_For_ML {
 //	std::vector<Pixel_For_ML> pixel;
 //};
-std::unordered_map<float, std::vector<Pixel_For_ML>> frame_map;
+std::unordered_map<float, std::vector<std::vector<Pixel_For_ML>>> frame_map;
 
 std::ofstream logFile("MLplugin_debug.log", std::ios::out | std::ios::app);
 
@@ -88,6 +89,22 @@ static PF_Err GlobalSetdown(
 {
 
 	if (logFile.is_open()) {
+
+
+	//	Log("========================================================");
+	//	for (const auto& pair : frame_map) {
+	//		float curr_time = pair.first;
+	//		const std::vector<std::vector<Pixel_For_ML>>& vec = pair.second;
+
+	//	for (size_t i = 0; i < vec.size(); i++) {
+	//		Log("Row: " + std::to_string(i));
+	//		for (const auto& pixel : vec[i]) {
+	//				Log("CURR: " + std::to_string(curr_time) + "B: " + std::to_string(pixel.B) + ", G: " + std::to_string(pixel.G) + ", R: " + std::to_string(pixel.R) + ", A: " + std::to_string(pixel.A));
+	//				}
+	//		}
+	//}
+	//Log("========================================================");
+
 		// Iterating through the 2D vector
 			// Iterate through the map and print the times and their corresponding frame data
 		//for (const auto& pair : frame_map) {
@@ -162,6 +179,7 @@ static PF_Err Render(
 	PF_ParamDef* params[],
 	PF_LayerDef* output)
 {
+	std::vector<std::vector<Pixel_For_ML>> vec;
 	std::vector<Pixel_For_ML> frame_data;
 	PF_ParamDef param;
 	PF_CHECKOUT_PARAM(in_data, SDK_CROSSDISSOLVE_TRANSITIONINPUT, in_data->current_time, in_data->time_step, in_data->time_scale, &param);
@@ -174,6 +192,8 @@ static PF_Err Render(
 
 	const char* outgoingData = (const char*)outgoing->data;
 	const char* incomingData = (const char*)incoming->data;
+
+
 	char* destData = (char*)dest->data;
 
 	if (params[SDK_CROSSDISSOLVE_FLIP]->u.bd.value)
@@ -181,18 +201,25 @@ static PF_Err Render(
 		destData += (output->height - 1) * dest->rowbytes;
 		dest->rowbytes = -dest->rowbytes;
 	}
+
+
 	float curr_time = (float)in_data->current_time;
+	float count_inner = 0;
+	float count_outer = 0;
+	std::ostringstream logStream;
 
 	for (int y = 0; y < output->height;
 		++y, outgoingData += outgoing->rowbytes, incomingData += incoming->rowbytes, destData += dest->rowbytes)
 	{
+		count_outer += 1;
 		for (int x = 0; x < output->width; ++x)
 		{
+			count_inner += 1;
 			float outgoingB = outgoingData ? ((const float*)outgoingData)[x * 4 + 0] : 0.0f;
 			float outgoingG = outgoingData ? ((const float*)outgoingData)[x * 4 + 1] : 0.0f;
 			float outgoingR = outgoingData ? ((const float*)outgoingData)[x * 4 + 2] : 0.0f;
 			float outgoingA = outgoingData ? ((const float*)outgoingData)[x * 4 + 3] : 0.0f;
-			Pixel_For_ML pixel = Pixel_For_ML{ outgoingB ,outgoingG,  outgoingR,outgoingA, curr_time};
+			Pixel_For_ML pixel = Pixel_For_ML{ outgoingB ,outgoingG,  outgoingR,outgoingA, curr_time };
 			frame_data.push_back(pixel);
 
 
@@ -213,21 +240,34 @@ static PF_Err Render(
 			((float*)destData)[x * 4 + 1] = (outgoingG * outgoingAlphaWeighted + incomingG * incomingAlphaWeighted) * recipNewAlpha;
 			((float*)destData)[x * 4 + 2] = (outgoingR * outgoingAlphaWeighted + incomingR * incomingAlphaWeighted) * recipNewAlpha;
 			((float*)destData)[x * 4 + 3] = newAlpha;
-		}
+			logStream << "CURR: " << curr_time << ", Row: " << y << ", Column: " << x << ", B: " << outgoingB << ", G: " << outgoingG << ", R: " << outgoingR << ", A: " << outgoingA << "\n";
 
+		}
+		vec.push_back(frame_data);
 	}
+
 	// Check if the time already exists in the map
 	if (frame_map.find(curr_time) == frame_map.end()) {
 		//// If time1 does not exist, add the pixel
-		frame_map[curr_time] = (frame_data);
-		Log("TIME: " + std::to_string(curr_time));
-		Log("========================================================");
+		frame_map[curr_time] = vec;
+		Log(logStream.str());
+	}
 
-		for (const auto& pixel : frame_data) {
+		//logStream << "ITERATIONS: (Height): " << output->height << ", (Width): " << output->width << ", Outer: " << count_outer << ", Inner: " << count_inner << "\n";
+
+		////Log("ITERATIONS: (Height)" + std::to_string(height_count) + "(Width): " + std::to_string(width_count) + "(Outer)" + std::to_string(count_outer) + "(Inner) : " + std::to_string(count_inner));
+		//for (size_t i = 0; i < vec.size(); i++) {
+		//	float pixel_count = 0;
+		//	for (const auto& pixel : vec[i]) {
+		//		logStream << "Curr:" << curr_time << ", Row: " << i << ", Pixel: " << pixel_count << ", B: " << pixel.B << ", G: " << pixel.G << ", R: " << pixel.R << ", A: " + pixel.A + "\n");
+		//		//Log("CURR: " + std::to_string(curr_time) + ", Row: " + std::to_string(i) + ", Pixel: " + std::to_string(pixel_count) + ", B: " + std::to_string(pixel.B) + ", G: " + std::to_string(pixel.G) + ", R: " + std::to_string(pixel.R) + ", A: " + std::to_string(pixel.A) + "\n");
+		//		pixel_count += 1;
+
+		/*for (const auto& pixel : frame_data) {
 			Log("B: " + std::to_string(pixel.B) + ", G: " + std::to_string(pixel.G) + ", R: " + std::to_string(pixel.R) + ", A: " + std::to_string(pixel.A));
 		}
 		Log("========================================================");
-	}
+	}*/
 	// Print the array
 	//}
 	//for (const auto& pixel : pixelArray_For_ML)
